@@ -1,4 +1,4 @@
-"""Modified for Shikhar Shukla (Amorfati123), 2026.
+"""Shikhar Shukla (Amorfati123), 2026.
 
 Derived from Vikbg/Vikbg under the Apache License 2.0.
 Keep the attribution notice from the repository NOTICE file when redistributing.
@@ -9,7 +9,6 @@ import datetime
 import hashlib
 import os
 import re
-import time
 from pathlib import Path
 
 import requests
@@ -110,43 +109,72 @@ def raise_request_error(operation_name, response):
 # Send one GraphQL request and normalize all failure cases in one place.
 # If a cache write is in progress, partial_cache lets us persist whatever was computed before raising.
 def graphql_request(operation_name, query, variables, partial_cache=None):
-    try:
-        response = requests.post(
-            GITHUB_GRAPHQL_URL,
-            json={"query": query, "variables": variables},
-            headers=HEADERS,
-            timeout=30,
-        )
-    except requests.RequestException as error:
-        if partial_cache is not None:
-            force_close_file(*partial_cache)
-        raise RuntimeError(f"{operation_name} request failed: {error}") from error
+    max_retries = 5
 
-    # Non-200 responses are handled before trying to parse the body as GraphQL JSON.
-    if response.status_code != 200:
-        if partial_cache is not None:
-            force_close_file(*partial_cache)
-        raise_request_error(operation_name, response)
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(
+                GITHUB_GRAPHQL_URL,
+                json={"query": query, "variables": variables},
+                headers=HEADERS,
+                timeout=30,
+            )
+        except requests.RequestException as error:
+            # Retry temporary network/request failures before giving up.
+            if attempt < max_retries - 1:
+                delay = (2 ** attempt) + random.uniform(0, 1)
+                print(
+                    f"{operation_name}: request failed ({error}); "
+                    f"retrying in {delay:.1f}s"
+                )
+                time.sleep(delay)
+                continue
 
-    # GitHub can still return malformed data, so JSON parsing gets its own guarded error path.
-    try:
-        payload = response.json()
-    except ValueError as error:
-        if partial_cache is not None:
-            force_close_file(*partial_cache)
-        raise RuntimeError(
-            f"{operation_name} returned invalid JSON: {response.text}"
-        ) from error
+            # Preserve any LOC work already completed before the final failure.
+            if partial_cache is not None:
+                force_close_file(*partial_cache)
+            raise RuntimeError(
+                f"{operation_name} request failed after {max_retries} attempts: {error}"
+            ) from error
 
-    # GraphQL-level errors still arrive inside a 200 response, so check them explicitly.
-    if payload.get("errors"):
-        if partial_cache is not None:
-            force_close_file(*partial_cache)
-        raise RuntimeError(
-            f"{operation_name} returned GraphQL errors: {payload['errors']}"
-        )
+        # GitHub can occasionally return transient gateway/service errors.
+        if response.status_code in (502, 503, 504):
+            if attempt < max_retries - 1:
+                delay = (2 ** attempt) + random.uniform(0, 1)
+                print(
+                    f"{operation_name}: GitHub returned {response.status_code}; "
+                    f"retrying in {delay:.1f}s"
+                )
+                time.sleep(delay)
+                continue
 
-    return payload["data"]
+        # Any remaining non-200 response is treated as a real failure.
+        if response.status_code != 200:
+            if partial_cache is not None:
+                force_close_file(*partial_cache)
+            raise_request_error(operation_name, response)
+
+        # GitHub can still return malformed data, so JSON parsing gets its own guarded error path.
+        try:
+            payload = response.json()
+        except ValueError as error:
+            if partial_cache is not None:
+                force_close_file(*partial_cache)
+            raise RuntimeError(
+                f"{operation_name} returned invalid JSON: {response.text}"
+            ) from error
+
+        # GraphQL-level errors still arrive inside a 200 response, so check them explicitly.
+        if payload.get("errors"):
+            if partial_cache is not None:
+                force_close_file(*partial_cache)
+            raise RuntimeError(
+                f"{operation_name} returned GraphQL errors: {payload['errors']}"
+            )
+
+        return payload["data"]
+
+    raise RuntimeError(f"{operation_name} failed after {max_retries} attempts")
 
 
 # Count either repositories or stars across all pages of a repository connection.
