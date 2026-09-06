@@ -164,12 +164,30 @@ def graphql_request(operation_name, query, variables, partial_cache=None):
                 f"{operation_name} returned invalid JSON: {response.text}"
             ) from error
 
-        # GraphQL-level errors still arrive inside a 200 response, so check them explicitly.
-        if payload.get("errors"):
+                # GraphQL-level errors can arrive inside an HTTP 200 response.
+        errors = payload.get("errors") or []
+        
+        if errors:
+            # Retry GitHub's temporary SERVICE_UNAVAILABLE errors.
+            service_unavailable = all(
+                error.get("type") == "SERVICE_UNAVAILABLE"
+                for error in errors
+            )
+        
+            if service_unavailable and attempt < max_retries - 1:
+                delay = (2 ** attempt) + random.uniform(0, 1)
+                print(
+                    f"{operation_name}: GitHub GraphQL service unavailable; "
+                    f"retrying in {delay:.1f}s"
+                )
+                time.sleep(delay)
+                continue
+        
             if partial_cache is not None:
                 force_close_file(*partial_cache)
+        
             raise RuntimeError(
-                f"{operation_name} returned GraphQL errors: {payload['errors']}"
+                f"{operation_name} returned GraphQL errors: {errors}"
             )
 
         return payload["data"]
