@@ -54,16 +54,18 @@ def remove_old_animation(root):
             element.getparent().remove(element)
 
 
+# Returns how many seconds the typing takes, so other effects can start once it's done.
 def add_typing_animation(root):
     remove_old_animation(root)
 
     background = root.find(tag("rect")).get("fill")
-    texts = root.findall(tag("text"))
+    # Extra decorations (like the Ring inscription) carry an id, the portrait and panel don't.
+    texts = [text for text in root.findall(tag("text")) if text.get("id") is None]
     portrait, panel = texts[0], texts[-1]
     cursor_color = panel.get("fill")
     lines = panel_lines(panel)
     if not lines:
-        return
+        return 0
 
     # The portrait fades in first, then the panel types itself out line by line.
     portrait.set("class", "ascii")
@@ -106,13 +108,12 @@ def add_typing_animation(root):
         })
         start += duration + PAUSE_BETWEEN_LINES
 
-    # Once everything is typed, leave a blinking cursor after the last line.
+    # Once everything is typed, leave a blinking cursor on a fresh line, like a prompt waiting for input.
     last = lines[-1]
-    cursor_x = last["x"] + (last["chars"] + 1) * CHAR_WIDTH
     SubElement(group, tag("rect"), attrib={
         "class": "cursor",
-        "x": f"{cursor_x:.1f}",
-        "y": f"{last['y'] - 14:g}",
+        "x": f"{last['x']:g}",
+        "y": f"{last['y'] + LINE_HEIGHT - 14:g}",
         "width": "9",
         "height": "17",
         "fill": cursor_color,
@@ -132,6 +133,7 @@ def add_typing_animation(root):
     root.insert(1, style)
     style.tail = "\n"
     group.tail = "\n"
+    return start
 
 
 if __name__ == "__main__":

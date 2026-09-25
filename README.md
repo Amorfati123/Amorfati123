@@ -33,16 +33,3 @@
 
 More on [ORCID](https://orcid.org/0009-0003-8941-3396).
 <!-- publications:end -->
-
-<!-- projects:start -->
-### Featured projects
-
-| Project | About | Language | Stars |
-| --- | --- | --- | ---: |
-| [wound-forecast](https://github.com/Amorfati123/wound-forecast) | Forecasting wound trajectory using ML | Jupyter Notebook | 1 |
-| [CheXNet](https://github.com/Amorfati123/CheXNet) | A pytorch reimplementation of CheXNet | Python | 1 |
-| [NEDSS-DataReporting](https://github.com/Amorfati123/NEDSS-DataReporting) | Data Near Real Time Reporting micro services for Modernized NBS System | TSQL | 0 |
-| [SpecKV](https://github.com/Amorfati123/SpecKV) |   | Jupyter Notebook | 3 |
-| [bridge2ai-voice-parkinsons-ast](https://github.com/Amorfati123/bridge2ai-voice-parkinsons-ast) |   | Jupyter Notebook | 1 |
-| [periop-prediction-framework](https://github.com/Amorfati123/periop-prediction-framework) | Machine learning models for predicting postoperative delirium from perioperative EHR data... | Jupyter Notebook | 1 |
-<!-- projects:end -->
