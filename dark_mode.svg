@@ -5,6 +5,83 @@
 .key {fill: #ffa657;} .value {fill: #a5d6ff;} .addColor {fill: #3fb950;} .delColor {fill: #f85149;} .cc {fill: #616e7f;}
 text, tspan {white-space: pre;} a {text-decoration: none;}
 </style>
+<style id="typing_style">
+@keyframes fade_in {from {opacity: 0;} to {opacity: 1;}}
+@keyframes blink {0%, 49% {opacity: 0;} 50%, 100% {opacity: 1;}}
+@keyframes show {from, to {opacity: 1;}}
+.ascii {animation: fade_in 0.8s ease-out backwards;}
+@keyframes type_0 {from {transform: translateX(-600.0px);} to {transform: translateX(-62.4px);}}
+.line_0 {animation: type_0 0.34s steps(56) 0.80s backwards;}
+.line_0 .caret {animation: show 0.34s 0.80s;}
+@keyframes type_1 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_1 {animation: type_1 0.35s steps(59) 1.18s backwards;}
+.line_1 .caret {animation: show 0.35s 1.18s;}
+@keyframes type_2 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_2 {animation: type_2 0.35s steps(59) 1.57s backwards;}
+.line_2 .caret {animation: show 0.35s 1.57s;}
+@keyframes type_3 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_3 {animation: type_3 0.35s steps(59) 1.96s backwards;}
+.line_3 .caret {animation: show 0.35s 1.96s;}
+@keyframes type_4 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_4 {animation: type_4 0.35s steps(59) 2.36s backwards;}
+.line_4 .caret {animation: show 0.35s 2.36s;}
+@keyframes type_5 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_5 {animation: type_5 0.35s steps(59) 2.75s backwards;}
+.line_5 .caret {animation: show 0.35s 2.75s;}
+@keyframes type_6 {from {transform: translateX(-600.0px);} to {transform: translateX(-590.4px);}}
+.line_6 {animation: type_6 0.01s steps(1) 3.15s backwards;}
+.line_6 .caret {animation: show 0.01s 3.15s;}
+@keyframes type_7 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_7 {animation: type_7 0.35s steps(59) 3.19s backwards;}
+.line_7 .caret {animation: show 0.35s 3.19s;}
+@keyframes type_8 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_8 {animation: type_8 0.35s steps(59) 3.59s backwards;}
+.line_8 .caret {animation: show 0.35s 3.59s;}
+@keyframes type_9 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_9 {animation: type_9 0.35s steps(59) 3.98s backwards;}
+.line_9 .caret {animation: show 0.35s 3.98s;}
+@keyframes type_10 {from {transform: translateX(-600.0px);} to {transform: translateX(-590.4px);}}
+.line_10 {animation: type_10 0.01s steps(1) 4.37s backwards;}
+.line_10 .caret {animation: show 0.01s 4.37s;}
+@keyframes type_11 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_11 {animation: type_11 0.35s steps(59) 4.42s backwards;}
+.line_11 .caret {animation: show 0.35s 4.42s;}
+@keyframes type_12 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_12 {animation: type_12 0.35s steps(59) 4.81s backwards;}
+.line_12 .caret {animation: show 0.35s 4.81s;}
+@keyframes type_13 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_13 {animation: type_13 0.35s steps(59) 5.21s backwards;}
+.line_13 .caret {animation: show 0.35s 5.21s;}
+@keyframes type_14 {from {transform: translateX(-600.0px);} to {transform: translateX(-120.0px);}}
+.line_14 {animation: type_14 0.30s steps(50) 5.60s backwards;}
+.line_14 .caret {animation: show 0.30s 5.60s;}
+@keyframes type_15 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_15 {animation: type_15 0.35s steps(59) 5.94s backwards;}
+.line_15 .caret {animation: show 0.35s 5.94s;}
+@keyframes type_16 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_16 {animation: type_16 0.35s steps(59) 6.34s backwards;}
+.line_16 .caret {animation: show 0.35s 6.34s;}
+@keyframes type_17 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_17 {animation: type_17 0.35s steps(59) 6.73s backwards;}
+.line_17 .caret {animation: show 0.35s 6.73s;}
+@keyframes type_18 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_18 {animation: type_18 0.35s steps(59) 7.12s backwards;}
+.line_18 .caret {animation: show 0.35s 7.12s;}
+@keyframes type_19 {from {transform: translateX(-600.0px);} to {transform: translateX(-120.0px);}}
+.line_19 {animation: type_19 0.30s steps(50) 7.52s backwards;}
+.line_19 .caret {animation: show 0.30s 7.52s;}
+@keyframes type_20 {from {transform: translateX(-600.0px);} to {transform: translateX(-24.0px);}}
+.line_20 {animation: type_20 0.36s steps(60) 7.86s backwards;}
+.line_20 .caret {animation: show 0.36s 7.86s;}
+@keyframes type_21 {from {transform: translateX(-600.0px);} to {transform: translateX(-24.0px);}}
+.line_21 {animation: type_21 0.36s steps(60) 8.26s backwards;}
+.line_21 .caret {animation: show 0.36s 8.26s;}
+@keyframes type_22 {from {transform: translateX(-600.0px);} to {transform: translateX(-33.6px);}}
+.line_22 {animation: type_22 0.35s steps(59) 8.66s backwards;}
+.line_22 .caret {animation: show 0.35s 8.66s;}
+.cursor {animation: blink 1.0s step-end 9.05s infinite backwards;}
+@media (prefers-reduced-motion: reduce) {.ascii, #typing * {animation: none;}}
+</style>
 <rect width="985px" height="530px" fill="#161b22" rx="15"/>
 <text x="15" y="30" fill="#c9d1d9" class="ascii">
 <tspan x="15" y="30">                                      </tspan>
@@ -58,4 +135,5 @@ text, tspan {white-space: pre;} a {text-decoration: none;}
 <tspan x="390" y="490" class="cc">. </tspan><tspan class="key">Commits</tspan>:<tspan class="cc" id="commit_data_dots"> ................... </tspan><tspan class="value" id="commit_data">115</tspan><tspan class="cc" id="commit_stats_gap"> |  </tspan><tspan class="key">Followers</tspan>:<tspan class="cc" id="follower_data_dots"> ......... </tspan><tspan class="value" id="follower_data">6</tspan>
 <tspan x="390" y="510" class="cc">. </tspan><tspan class="key">GitHub LOC</tspan>:<tspan class="cc" id="loc_data_dots"> ................... </tspan><tspan class="value" id="loc_data">48,235</tspan> ( <tspan class="addColor">+</tspan><tspan class="addColor" id="loc_add">88.1K</tspan>, <tspan id="loc_del_dots"></tspan><tspan class="delColor">-</tspan><tspan class="delColor" id="loc_del">39.9K</tspan> )
 </text>
+<g id="typing"><g class="line_0"><rect x="990" y="14" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="16" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_1"><rect x="990" y="34" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="36" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_2"><rect x="990" y="54" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="56" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_3"><rect x="990" y="74" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="76" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_4"><rect x="990" y="94" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="96" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_5"><rect x="990" y="114" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="116" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_6"><rect x="990" y="134" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="136" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_7"><rect x="990" y="154" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="156" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_8"><rect x="990" y="174" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="176" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_9"><rect x="990" y="194" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="196" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_10"><rect x="990" y="214" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="216" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_11"><rect x="990" y="234" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="236" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_12"><rect x="990" y="254" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="256" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_13"><rect x="990" y="274" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="276" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_14"><rect x="990" y="304" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="306" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_15"><rect x="990" y="334" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="336" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_16"><rect x="990" y="354" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="356" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_17"><rect x="990" y="374" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="376" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_18"><rect x="990" y="394" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="396" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_19"><rect x="990" y="434" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="436" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_20"><rect x="990" y="454" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="456" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_21"><rect x="990" y="474" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="476" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><g class="line_22"><rect x="990" y="494" width="620" height="20" fill="#161b22"/><rect class="caret" x="990" y="496" width="9" height="17" fill="#c9d1d9" opacity="0"/></g><rect class="cursor" x="966.0" y="496" width="9" height="17" fill="#c9d1d9"/></g>
 </svg>

@@ -16,6 +16,8 @@ from dateutil import relativedelta
 from dotenv import load_dotenv
 from lxml.etree import parse
 
+from typing_animation import add_typing_animation
+
 load_dotenv()
 
 # GitHub API and local file layout used by the script.
@@ -615,6 +617,8 @@ def svg_overwrite(
         "commit_stats_gap",
         secondary_stat_gap(commit_stats_left_width(commit_data)),
     )
+    # Rebuilt every run so the typing speed matches the new line lengths.
+    add_typing_animation(root)
     tree.write(filename, encoding="utf-8", xml_declaration=True)
 
 

@@ -11,6 +11,7 @@ generator.
 
 import requests
 
+import research
 import today
 
 PUBLIC_REPOSITORIES_URL = "https://api.github.com/users/{username}/repos"
@@ -113,6 +114,7 @@ def actions_safe_repo_stats(count_type, owner_affiliation):
 def main():
     today.graph_repos_stars = actions_safe_repo_stats
     today.main()
+    research.update_readme()
 
 
 if __name__ == "__main__":
