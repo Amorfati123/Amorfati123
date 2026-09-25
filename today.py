@@ -108,7 +108,8 @@ def raise_request_error(operation_name, response):
 
 # Send one GraphQL request and normalize all failure cases in one place.
 # If a cache write is in progress, partial_cache lets us persist whatever was computed before raising.
-def graphql_request(operation_name, query, variables, partial_cache=None):
+# skippable_fields names fields GitHub is allowed to leave out (null) when it can't compute them.
+def graphql_request(operation_name, query, variables, partial_cache=None, skippable_fields=()):
     max_retries = 5
 
     for attempt in range(max_retries):
@@ -164,16 +165,16 @@ def graphql_request(operation_name, query, variables, partial_cache=None):
                 f"{operation_name} returned invalid JSON: {response.text}"
             ) from error
 
-                # GraphQL-level errors can arrive inside an HTTP 200 response.
+        # GraphQL-level errors can arrive inside an HTTP 200 response.
         errors = payload.get("errors") or []
-        
+
         if errors:
             # Retry GitHub's temporary SERVICE_UNAVAILABLE errors.
             service_unavailable = all(
                 error.get("type") == "SERVICE_UNAVAILABLE"
                 for error in errors
             )
-        
+
             if service_unavailable and attempt < max_retries - 1:
                 delay = (2 ** attempt) + random.uniform(0, 1)
                 print(
@@ -182,10 +183,23 @@ def graphql_request(operation_name, query, variables, partial_cache=None):
                 )
                 time.sleep(delay)
                 continue
-        
+
+            # Some huge commits never get their additions/deletions computed by GitHub,
+            # so retrying won't help. Use the rest of the data and treat those as 0.
+            only_skippable = service_unavailable and all(
+                (error.get("path") or [None])[-1] in skippable_fields
+                for error in errors
+            )
+            if only_skippable and payload.get("data"):
+                print(
+                    f"{operation_name}: GitHub couldn't compute {len(errors)} "
+                    f"field(s), counting them as 0"
+                )
+                return payload["data"]
+
             if partial_cache is not None:
                 force_close_file(*partial_cache)
-        
+
             raise RuntimeError(
                 f"{operation_name} returned GraphQL errors: {errors}"
             )
@@ -298,6 +312,7 @@ def recursive_loc(
         query,
         variables,
         partial_cache=(cache_rows, cache_header),
+        skippable_fields=("additions", "deletions"),
     )
     branch = data["repository"]["defaultBranchRef"]
 
@@ -337,8 +352,8 @@ def loc_counter_one_repo(
         # GitHub can return commits without a mapped user, so guard against missing author identities.
         if user.get("id") == OWNER_ID:
             my_commits += 1
-            addition_total += edge["node"]["additions"]
-            deletion_total += edge["node"]["deletions"]
+            addition_total += edge["node"]["additions"] or 0
+            deletion_total += edge["node"]["deletions"] or 0
 
     if not history["pageInfo"]["hasNextPage"]:
         return addition_total, deletion_total, my_commits
