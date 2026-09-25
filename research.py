@@ -1,10 +1,9 @@
 """Keeps the research section of README.md up to date.
 
-Two blocks get rebuilt on every run, each between its own pair of marker comments:
-- recent publications, pulled from the public ORCID API
-- featured projects, taken from the repos pinned on the GitHub profile
+Recent publications get pulled from the public ORCID API on every run and written
+between the publications marker comments.
 
-If a source can't be reached, that block is left exactly as it was, so a flaky API
+If ORCID can't be reached, that block is left exactly as it was, so a flaky API
 never wipes the README or fails the build.
 """
 import re
@@ -12,36 +11,11 @@ from pathlib import Path
 
 import requests
 
-import today
-
 README_PATH = Path("README.md")
 ORCID_ID = "0009-0003-8941-3396"
 ORCID_WORKS_URL = "https://pub.orcid.org/v3.0/{orcid}/works"
-PUBLIC_REPOS_URL = "https://api.github.com/users/{username}/repos"
 
 MAX_PUBLICATIONS = 5
-MAX_PROJECTS = 6
-MAX_DESCRIPTION_LENGTH = 100
-
-PINNED_QUERY = """
-query ($login: String!) {
-    user(login: $login) {
-        pinnedItems(first: 6, types: REPOSITORY) {
-            nodes {
-                ... on Repository {
-                    name
-                    nameWithOwner
-                    url
-                    description
-                    stargazerCount
-                    primaryLanguage {
-                        name
-                    }
-                }
-            }
-        }
-    }
-}"""
 
 
 def orcid_value(data, *keys):
@@ -98,60 +72,7 @@ def fetch_publications(orcid=ORCID_ID, limit=MAX_PUBLICATIONS):
     return works[:limit]
 
 
-def fetch_pinned_projects():
-    data = today.graphql_request("pinned_repos", PINNED_QUERY, {"login": today.USER_NAME})
-    nodes = data["user"]["pinnedItems"]["nodes"]
-    return [
-        {
-            "name": node["name"],
-            "url": node["url"],
-            "description": node.get("description"),
-            "language": (node.get("primaryLanguage") or {}).get("name"),
-            "stars": node.get("stargazerCount", 0),
-        }
-        for node in nodes
-        if node
-    ]
-
-
-# Used when nothing is pinned: show my most starred, most recently active public repos instead.
-def fetch_top_projects(limit=MAX_PROJECTS):
-    response = requests.get(
-        PUBLIC_REPOS_URL.format(username=today.USER_NAME),
-        params={"type": "owner", "sort": "pushed", "per_page": 100},
-        headers={"Accept": "application/vnd.github+json"},
-        timeout=30,
-    )
-    response.raise_for_status()
-
-    repos = [
-        repo for repo in response.json()
-        if not repo.get("fork") and repo["name"].lower() != today.USER_NAME.lower()
-    ]
-    # Sort is stable, so repos with the same star count stay in most recently pushed order.
-    repos.sort(key=lambda repo: repo.get("stargazers_count", 0), reverse=True)
-    return [
-        {
-            "name": repo["name"],
-            "url": repo["html_url"],
-            "description": repo.get("description"),
-            "language": repo.get("language"),
-            "stars": repo.get("stargazers_count", 0),
-        }
-        for repo in repos[:limit]
-    ]
-
-
-def fetch_projects():
-    try:
-        projects = fetch_pinned_projects()
-    except Exception as error:
-        print(f"research: couldn't read pinned repos ({error}), using top repos instead")
-        projects = []
-    return projects or fetch_top_projects()
-
-
-# Keep titles and descriptions from breaking the markdown around them.
+# Keep titles and venues from breaking the markdown around them.
 def clean_markdown(text):
     return re.sub(r"([\\`*_\[\]|<>])", r"\\\1", " ".join((text or "").split()))
 
@@ -169,32 +90,6 @@ def render_publications(works):
     return "\n".join(lines)
 
 
-def shorten(text, limit=MAX_DESCRIPTION_LENGTH):
-    text = " ".join((text or "").split())
-    if len(text) <= limit:
-        return text
-    return text[:limit].rsplit(" ", 1)[0].rstrip(",.;:") + "..."
-
-
-def render_projects(projects):
-    if not projects:
-        return ""
-    lines = [
-        "### Featured projects",
-        "",
-        "| Project | About | Language | Stars |",
-        "| --- | --- | --- | ---: |",
-    ]
-    for project in projects:
-        lines.append(
-            f"| [{clean_markdown(project['name'])}]({project['url']}) "
-            f"| {clean_markdown(shorten(project['description'])) or ' '} "
-            f"| {clean_markdown(project['language']) or ' '} "
-            f"| {project['stars']} |"
-        )
-    return "\n".join(lines)
-
-
 # Swap the text between <!-- name:start --> and <!-- name:end -->, adding the markers if they're missing.
 def replace_block(readme, name, content):
     start, end = f"<!-- {name}:start -->", f"<!-- {name}:end -->"
@@ -209,15 +104,10 @@ def update_readme(path=README_PATH):
     readme = path.read_text(encoding="utf-8")
     updated = readme
 
-    sections = (
-        ("publications", fetch_publications, render_publications),
-        ("projects", fetch_projects, render_projects),
-    )
-    for name, fetch, render in sections:
-        try:
-            updated = replace_block(updated, name, render(fetch()))
-        except Exception as error:
-            print(f"research: skipped {name} this run, keeping the old one ({error})")
+    try:
+        updated = replace_block(updated, "publications", render_publications(fetch_publications()))
+    except Exception as error:
+        print(f"research: skipped publications this run, keeping the old ones ({error})")
 
     if updated != readme:
         path.write_text(updated, encoding="utf-8")

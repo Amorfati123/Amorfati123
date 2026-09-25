@@ -16,6 +16,7 @@ from dateutil import relativedelta
 from dotenv import load_dotenv
 from lxml.etree import parse
 
+import middle_earth
 from typing_animation import add_typing_animation
 
 load_dotenv()
@@ -593,6 +594,7 @@ def svg_overwrite(
     contrib_data,
     follower_data,
     loc_data,
+    quest_commits=None,
 ):
     tree = parse(filename)
     root = tree.getroot()
@@ -617,8 +619,13 @@ def svg_overwrite(
         "commit_stats_gap",
         secondary_stat_gap(commit_stats_left_width(commit_data)),
     )
-    # Rebuilt every run so the typing speed matches the new line lengths.
-    add_typing_animation(root)
+    # If this year's commits couldn't be fetched, the quest keeps yesterday's numbers.
+    if quest_commits is not None:
+        middle_earth.update_quest(root, quest_commits, justify_format, find_and_replace)
+    # Rebuilt every run so the typing speed matches the new line lengths,
+    # and the Ring starts glowing right as the typing finishes.
+    typing_time = add_typing_animation(root)
+    middle_earth.add_ring_inscription(root, typing_time)
     tree.write(filename, encoding="utf-8", xml_declaration=True)
 
 
@@ -766,6 +773,7 @@ def update_svg_files(
     contrib_data,
     follower_data,
     loc_data,
+    quest_commits=None,
 ):
     for svg_file in SVG_FILES:
         svg_overwrite(
@@ -777,6 +785,7 @@ def update_svg_files(
             contrib_data,
             follower_data,
             loc_data,
+            quest_commits,
         )
 
 
@@ -827,6 +836,16 @@ def main():
     follower_data, follower_time = perf_counter(follower_getter, USER_NAME)
     print_duration("followers", follower_time)
 
+    # The Road to Mordor is a bonus, so a failed lookup shouldn't sink the whole run.
+    try:
+        quest_commits, quest_time = perf_counter(
+            middle_earth.commits_this_year, graphql_request, USER_NAME
+        )
+        print_duration("road to Mordor", quest_time)
+    except RuntimeError as error:
+        print(f"Road to Mordor: couldn't count this year's commits ({error})")
+        quest_commits = None
+
     # Only this specific user has deleted-repository stats tracked in the archive file.
     if OWNER_ID == ARCHIVE_USER_ID:
         archived_data = add_archive()
@@ -846,6 +865,7 @@ def main():
         contrib_data,
         follower_data,
         total_loc[:-1],
+        quest_commits,
     )
 
     total_runtime = (
