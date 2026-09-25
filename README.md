@@ -28,7 +28,7 @@
   AMIA 2026 Amplify Informatics Conference · 2026
 - **[SpecKV: Adaptive Speculative Decoding with Compression-Aware Gamma Selection](https://doi.org/10.48550/ARXIV.2605.02888)**  
   2026
-- **[Demographic Confounding in Voice-Based Parkinson's Disease Screening: Cross-Validation Study Using the Bridge2AI Voice Dataset (Preprint)](https://doi.org/10.2196/preprints.95609)**  
+- **[Prior Antibiotic Exposure and the Causal Risk of Antimicrobial Resistance: A Multi-Site Cohort Study of 1·2 Million Culture Episodes](https://doi.org/10.2139/ssrn.6494290)**  
   2026
 
 More on [ORCID](https://orcid.org/0009-0003-8941-3396).
@@ -44,5 +44,5 @@ More on [ORCID](https://orcid.org/0009-0003-8941-3396).
 | [NEDSS-DataReporting](https://github.com/Amorfati123/NEDSS-DataReporting) | Data Near Real Time Reporting micro services for Modernized NBS System | TSQL | 0 |
 | [SpecKV](https://github.com/Amorfati123/SpecKV) |   | Jupyter Notebook | 3 |
 | [bridge2ai-voice-parkinsons-ast](https://github.com/Amorfati123/bridge2ai-voice-parkinsons-ast) |   | Jupyter Notebook | 1 |
-| [periop-prediction-framework](https://github.com/Amorfati123/periop-prediction-framework) | Machine learning models for predicting postoperative delirium from perioperative EHR data, including baseline models, domain-structured ensembles, interpretability, calibration, and decision curve analysis. | Jupyter Notebook | 1 |
+| [periop-prediction-framework](https://github.com/Amorfati123/periop-prediction-framework) | Machine learning models for predicting postoperative delirium from perioperative EHR data... | Jupyter Notebook | 1 |
 <!-- projects:end -->
