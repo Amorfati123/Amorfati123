@@ -21,6 +21,7 @@ PUBLIC_REPOS_URL = "https://api.github.com/users/{username}/repos"
 
 MAX_PUBLICATIONS = 5
 MAX_PROJECTS = 6
+MAX_DESCRIPTION_LENGTH = 100
 
 PINNED_QUERY = """
 query ($login: String!) {
@@ -55,6 +56,9 @@ def orcid_value(data, *keys):
 def parse_work(summary):
     title = orcid_value(summary, "title", "title", "value")
     if not title:
+        return None
+    # Journals like JMIR list the preprint as its own work next to the published paper, skip the copy.
+    if title.strip().lower().endswith("(preprint)"):
         return None
 
     year = orcid_value(summary, "publication-date", "year", "value")
@@ -165,6 +169,13 @@ def render_publications(works):
     return "\n".join(lines)
 
 
+def shorten(text, limit=MAX_DESCRIPTION_LENGTH):
+    text = " ".join((text or "").split())
+    if len(text) <= limit:
+        return text
+    return text[:limit].rsplit(" ", 1)[0].rstrip(",.;:") + "..."
+
+
 def render_projects(projects):
     if not projects:
         return ""
@@ -177,7 +188,7 @@ def render_projects(projects):
     for project in projects:
         lines.append(
             f"| [{clean_markdown(project['name'])}]({project['url']}) "
-            f"| {clean_markdown(project['description']) or ' '} "
+            f"| {clean_markdown(shorten(project['description'])) or ' '} "
             f"| {clean_markdown(project['language']) or ' '} "
             f"| {project['stars']} |"
         )
