@@ -37,7 +37,10 @@ jobs:
           USER_NAME: ${{ secrets.USER_NAME || github.repository_owner }}
         run: python generate_readme.py
 
+      # Runs even if the stats step failed, so the partial LOC cache gets saved
+      # and the next run can pick up where this one stopped.
       - name: Commit generated stats
+        if: success() || failure()
         run: |-
           git add .
           git diff

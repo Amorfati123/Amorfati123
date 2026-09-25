@@ -40,6 +40,9 @@ STAR_DATA_WIDTH = 14
 STATS_SECONDARY_COLUMN_WIDTH = 34
 STATS_SECONDARY_SEPARATOR = " |  "
 
+# Commits per request when counting LOC. We step down this list when GitHub times out.
+LOC_PAGE_SIZES = (100, 50, 25, 10)
+
 # Simple runtime counters so the script can report how many GraphQL calls each path used.
 QUERY_COUNT = {
     "user_getter": 0,
@@ -94,6 +97,12 @@ def format_plural(value):
     return "s" if value != 1 else ""
 
 
+# Raised when GitHub keeps timing out or saying it's unavailable, even after retries.
+# Callers can catch this to try a cheaper request instead of giving up.
+class GitHubUnavailable(RuntimeError):
+    pass
+
+
 # Turn an HTTP error into a readable exception that includes the current query counters.
 def raise_request_error(operation_name, response):
     if response.status_code == 403:
@@ -134,7 +143,7 @@ def graphql_request(operation_name, query, variables, partial_cache=None, skippa
             # Preserve any LOC work already completed before the final failure.
             if partial_cache is not None:
                 force_close_file(*partial_cache)
-            raise RuntimeError(
+            raise GitHubUnavailable(
                 f"{operation_name} request failed after {max_retries} attempts: {error}"
             ) from error
 
@@ -148,6 +157,13 @@ def graphql_request(operation_name, query, variables, partial_cache=None, skippa
                 )
                 time.sleep(delay)
                 continue
+
+            if partial_cache is not None:
+                force_close_file(*partial_cache)
+            raise GitHubUnavailable(
+                f"{operation_name} failed with status {response.status_code} "
+                f"after {max_retries} attempts"
+            )
 
         # Any remaining non-200 response is treated as a real failure.
         if response.status_code != 200:
@@ -200,7 +216,8 @@ def graphql_request(operation_name, query, variables, partial_cache=None, skippa
             if partial_cache is not None:
                 force_close_file(*partial_cache)
 
-            raise RuntimeError(
+            error_class = GitHubUnavailable if service_unavailable else RuntimeError
+            raise error_class(
                 f"{operation_name} returned GraphQL errors: {errors}"
             )
 
@@ -263,26 +280,18 @@ def graph_repos_stars(count_type, owner_affiliation):
     return 0
 
 
-# Traverse commit history for one repository, 100 commits at a time, until there are no more pages.
+# Walk the commit history of one repository and add up the lines changed in my commits.
+# GitHub filters the history by author for us, so we only fetch commits that actually count.
+# If a page keeps timing out (usually because of a few huge commits), we fall back to smaller pages.
 # The cache lists are passed through so partial results can still be saved if a request fails midway.
-def recursive_loc(
-    owner,
-    repo_name,
-    cache_rows,
-    cache_header,
-    addition_total=0,
-    deletion_total=0,
-    my_commits=0,
-    cursor=None,
-):
-    query_count("recursive_loc")
+def recursive_loc(owner, repo_name, cache_rows, cache_header):
     query = """
-    query ($repo_name: String!, $owner: String!, $cursor: String) {
+    query ($repo_name: String!, $owner: String!, $cursor: String, $page_size: Int!, $author_id: ID!) {
         repository(name: $repo_name, owner: $owner) {
             defaultBranchRef {
                 target {
                     ... on Commit {
-                        history(first: 100, after: $cursor) {
+                        history(first: $page_size, after: $cursor, author: {id: $author_id}) {
                             edges {
                                 node {
                                     ... on Commit {
@@ -306,69 +315,62 @@ def recursive_loc(
             }
         }
     }"""
-    variables = {"repo_name": repo_name, "owner": owner, "cursor": cursor}
-    data = graphql_request(
-        "recursive_loc",
-        query,
-        variables,
-        partial_cache=(cache_rows, cache_header),
-        skippable_fields=("additions", "deletions"),
-    )
-    branch = data["repository"]["defaultBranchRef"]
+    addition_total = 0
+    deletion_total = 0
+    my_commits = 0
+    cursor = None
+    size_index = 0
 
-    # Empty repositories do not have a default branch, so they contribute nothing here.
-    if branch is None:
-        return 0, 0, 0
+    while True:
+        query_count("recursive_loc")
+        variables = {
+            "repo_name": repo_name,
+            "owner": owner,
+            "cursor": cursor,
+            "page_size": LOC_PAGE_SIZES[size_index],
+            "author_id": OWNER_ID,
+        }
+        try:
+            data = graphql_request(
+                "recursive_loc",
+                query,
+                variables,
+                skippable_fields=("additions", "deletions"),
+            )
+        except GitHubUnavailable:
+            if size_index < len(LOC_PAGE_SIZES) - 1:
+                size_index += 1
+                print(
+                    f"recursive_loc: {owner}/{repo_name} keeps timing out, "
+                    f"trying {LOC_PAGE_SIZES[size_index]} commits per page"
+                )
+                continue
+            force_close_file(cache_rows, cache_header)
+            raise
+        except RuntimeError:
+            force_close_file(cache_rows, cache_header)
+            raise
 
-    history = branch["target"]["history"]
-    return loc_counter_one_repo(
-        owner,
-        repo_name,
-        cache_rows,
-        cache_header,
-        history,
-        addition_total,
-        deletion_total,
-        my_commits,
-    )
+        branch = data["repository"]["defaultBranchRef"]
 
+        # Empty repositories do not have a default branch, so they contribute nothing here.
+        if branch is None:
+            return 0, 0, 0
 
-# Consume one page of commit history for a single repository.
-# Only commits authored by the current GitHub user count toward the stored LOC totals.
-def loc_counter_one_repo(
-    owner,
-    repo_name,
-    cache_rows,
-    cache_header,
-    history,
-    addition_total,
-    deletion_total,
-    my_commits,
-):
-    for edge in history["edges"]:
-        author = edge["node"].get("author") or {}
-        user = author.get("user") or {}
+        history = branch["target"]["history"]
+        for edge in history["edges"]:
+            author = edge["node"].get("author") or {}
+            user = author.get("user") or {}
 
-        # GitHub can return commits without a mapped user, so guard against missing author identities.
-        if user.get("id") == OWNER_ID:
-            my_commits += 1
-            addition_total += edge["node"]["additions"] or 0
-            deletion_total += edge["node"]["deletions"] or 0
+            # The author filter should already handle this, but double check anyway.
+            if user.get("id") == OWNER_ID:
+                my_commits += 1
+                addition_total += edge["node"]["additions"] or 0
+                deletion_total += edge["node"]["deletions"] or 0
 
-    if not history["pageInfo"]["hasNextPage"]:
-        return addition_total, deletion_total, my_commits
-
-    # Recurse with the accumulated totals until the full repository history has been processed.
-    return recursive_loc(
-        owner,
-        repo_name,
-        cache_rows,
-        cache_header,
-        addition_total,
-        deletion_total,
-        my_commits,
-        history["pageInfo"]["endCursor"],
-    )
+        if not history["pageInfo"]["hasNextPage"]:
+            return addition_total, deletion_total, my_commits
+        cursor = history["pageInfo"]["endCursor"]
 
 
 # Fetch every repository that should contribute to LOC stats, then hand the full list to the cache layer.
