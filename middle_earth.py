@@ -13,25 +13,26 @@ from lxml.etree import SubElement
 
 SVG_NS = "http://www.w3.org/2000/svg"
 
-# How many contributions in a year count as reaching Mount Doom. Roughly one a day.
-QUEST_GOAL = 365
+# Frodo walked roughly 1,779 miles from Bag End to Mount Doom, so each contribution is a mile.
+JOURNEY_MILES = 1779
+QUEST_GOAL = JOURNEY_MILES
 BAR_WIDTH = 39
 QUEST_COUNT_WIDTH = 16
 QUEST_PLACE_WIDTH = 15
 
-# Rough spots along the Fellowship's (and then Frodo's) route, by share of the journey.
+# Stops along the Fellowship's (and then Frodo's) route, in rough miles from Bag End.
 LANDMARKS = (
-    (0.00, "Bag End"),
-    (0.06, "Bree"),
-    (0.12, "Weathertop"),
-    (0.20, "Rivendell"),
-    (0.33, "Moria"),
-    (0.40, "Lothlórien"),
-    (0.52, "Amon Hen"),
-    (0.66, "Dead Marshes"),
-    (0.78, "Cirith Ungol"),
-    (0.90, "Mordor"),
-    (1.00, "Mount Doom!"),
+    (0, "Bag End"),
+    (135, "Bree"),
+    (235, "Weathertop"),
+    (458, "Rivendell"),
+    (738, "Moria"),
+    (800, "Lothlórien"),
+    (1200, "Amon Hen"),
+    (1450, "Dead Marshes"),
+    (1680, "Cirith Ungol"),
+    (1720, "Mordor"),
+    (1779, "Mount Doom!"),
 )
 
 RING_INSCRIPTION = (
@@ -99,7 +100,7 @@ def quest_bar(count, goal=QUEST_GOAL, width=BAR_WIDTH):
 
 def quest_place(count, goal=QUEST_GOAL):
     progress = quest_progress(count, goal)
-    reached = [name for share, name in LANDMARKS if progress >= share]
+    reached = [name for miles, name in LANDMARKS if progress >= miles / JOURNEY_MILES]
     return reached[-1]
 
 
