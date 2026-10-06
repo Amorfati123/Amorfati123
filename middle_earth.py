@@ -1,7 +1,8 @@
 """Lord of the Rings touches for the profile card.
 
-Road to Mordor: this year's commits drawn as Frodo's journey from the Shire to
-Mount Doom, with the landmark you've reached so far. It starts over every January.
+Road to Mordor: this year's contributions (the same total as the green graph on the
+profile) drawn as Frodo's journey from the Shire to Mount Doom, with the landmark
+you've reached so far. It starts over every January.
 
 The Ring inscription: once the card finishes typing, the One Ring's inscription
 heats up along the bottom of the card and flickers like it's sitting in the fire.
@@ -12,25 +13,26 @@ from lxml.etree import SubElement
 
 SVG_NS = "http://www.w3.org/2000/svg"
 
-# How many commits in a year count as reaching Mount Doom. Roughly one a day.
-QUEST_GOAL = 365
+# Frodo walked roughly 1,779 miles from Bag End to Mount Doom, so each contribution is a mile.
+JOURNEY_MILES = 1779
+QUEST_GOAL = JOURNEY_MILES
 BAR_WIDTH = 39
-QUEST_COUNT_WIDTH = 17
+QUEST_COUNT_WIDTH = 16
 QUEST_PLACE_WIDTH = 15
 
-# Rough spots along the Fellowship's (and then Frodo's) route, by share of the journey.
+# Stops along the Fellowship's (and then Frodo's) route, in rough miles from Bag End.
 LANDMARKS = (
-    (0.00, "Bag End"),
-    (0.06, "Bree"),
-    (0.12, "Weathertop"),
-    (0.20, "Rivendell"),
-    (0.33, "Moria"),
-    (0.40, "Lothlórien"),
-    (0.52, "Amon Hen"),
-    (0.66, "Dead Marshes"),
-    (0.78, "Cirith Ungol"),
-    (0.90, "Mordor"),
-    (1.00, "Mount Doom!"),
+    (0, "Bag End"),
+    (135, "Bree"),
+    (235, "Weathertop"),
+    (458, "Rivendell"),
+    (738, "Moria"),
+    (800, "Lothlórien"),
+    (1200, "Amon Hen"),
+    (1450, "Dead Marshes"),
+    (1680, "Cirith Ungol"),
+    (1720, "Mordor"),
+    (1779, "Mount Doom!"),
 )
 
 RING_INSCRIPTION = (
@@ -44,11 +46,20 @@ RING_ID = "ring_inscription"
 RING_STYLE_ID = "ring_style"
 RING_DEFS_ID = "ring_defs"
 
-COMMITS_THIS_YEAR_QUERY = """
+# contributionCalendar is what draws the green squares, so its total matches the profile.
+# The other counts are only printed, to make it easy to see where the activity comes from.
+CONTRIBUTIONS_QUERY = """
 query ($login: String!, $from: DateTime!) {
     user(login: $login) {
         contributionsCollection(from: $from) {
+            contributionCalendar {
+                totalContributions
+            }
             totalCommitContributions
+            totalPullRequestContributions
+            totalPullRequestReviewContributions
+            totalIssueContributions
+            restrictedContributionsCount
         }
     }
 }"""
@@ -58,41 +69,51 @@ def tag(name):
     return f"{{{SVG_NS}}}{name}"
 
 
-def commits_this_year(graphql_request, login, today=None):
+def contributions_this_year(graphql_request, login, today=None):
     today = today or datetime.date.today()
     data = graphql_request(
-        "commits_this_year",
-        COMMITS_THIS_YEAR_QUERY,
+        "contributions_this_year",
+        CONTRIBUTIONS_QUERY,
         {"login": login, "from": f"{today.year}-01-01T00:00:00Z"},
     )
-    return data["user"]["contributionsCollection"]["totalCommitContributions"]
+    collection = data["user"]["contributionsCollection"]
+    total = collection["contributionCalendar"]["totalContributions"]
+    print(
+        f"Road to Mordor: {total} contributions in {today.year} "
+        f"(commits {collection['totalCommitContributions']}, "
+        f"PRs {collection['totalPullRequestContributions']}, "
+        f"reviews {collection['totalPullRequestReviewContributions']}, "
+        f"issues {collection['totalIssueContributions']}, "
+        f"private {collection['restrictedContributionsCount']})"
+    )
+    return total
 
 
-def quest_progress(commits, goal=QUEST_GOAL):
-    return max(0.0, min(1.0, commits / goal))
+def quest_progress(count, goal=QUEST_GOAL):
+    return max(0.0, min(1.0, count / goal))
 
 
-def quest_bar(commits, goal=QUEST_GOAL, width=BAR_WIDTH):
-    done = round(quest_progress(commits, goal) * width)
+def quest_bar(count, goal=QUEST_GOAL, width=BAR_WIDTH):
+    done = round(quest_progress(count, goal) * width)
     return "█" * done, "░" * (width - done)
 
 
-def quest_place(commits, goal=QUEST_GOAL):
-    progress = quest_progress(commits, goal)
-    reached = [name for share, name in LANDMARKS if progress >= share]
+def quest_place(count, goal=QUEST_GOAL):
+    progress = quest_progress(count, goal)
+    reached = [name for miles, name in LANDMARKS if progress >= miles / JOURNEY_MILES]
     return reached[-1]
 
 
 # Fill in the Road to Mordor lines. justify_format comes from today.py so the dot
 # padding here works exactly like the rest of the card.
-def update_quest(root, commits, justify_format, find_and_replace, today=None, goal=QUEST_GOAL):
+def update_quest(root, count, justify_format, find_and_replace, today=None, goal=QUEST_GOAL):
     today = today or datetime.date.today()
-    done, left = quest_bar(commits, goal)
+    done, left = quest_bar(count, goal)
     find_and_replace(root, "quest_done", done)
     find_and_replace(root, "quest_left", left)
     find_and_replace(root, "quest_year", str(today.year))
-    justify_format(root, "quest_count", f"{commits}/{goal}", QUEST_COUNT_WIDTH)
-    justify_format(root, "quest_place", quest_place(commits, goal), QUEST_PLACE_WIDTH)
+    justify_format(root, "quest_count", f"{count}/{goal}", QUEST_COUNT_WIDTH)
+    justify_format(root, "quest_place", quest_place(count, goal), QUEST_PLACE_WIDTH)
 
 
 def remove_old_ring(root):
